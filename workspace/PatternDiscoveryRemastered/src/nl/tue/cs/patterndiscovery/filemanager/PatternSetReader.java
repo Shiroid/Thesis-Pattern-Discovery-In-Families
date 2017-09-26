@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
+import nl.tue.cs.patterndiscovery.model.CollinsLispNote;
 import nl.tue.cs.patterndiscovery.model.Note;
 import nl.tue.cs.patterndiscovery.model.Pattern;
 import nl.tue.cs.patterndiscovery.model.PatternOccurrence;
@@ -61,7 +62,7 @@ public class PatternSetReader {
 				if(s != null) {
 					Note n = NoteReader.readPlainNote(lines[i]);
 					Note sn = s.getNote(n);
-					if(sn == null) o.addNote(n);
+					if(sn == null) addPossibleMorpheticNote(s, o, n); //Make this faster
 					else o.addNote(sn);
 				}
 				else o.addNote(NoteReader.readPlainNote(lines[i]));
@@ -74,6 +75,20 @@ public class PatternSetReader {
 		if(s != null) s.addPatternSet(result);
 		
 		return result;
+	}
+	
+	public static void addPossibleMorpheticNote(Song s, PatternOccurrence o, Note n){
+		for(Note m: s){
+			if(m.getOnset() == n.getOnset()){
+				if(m instanceof CollinsLispNote){
+					if(((CollinsLispNote) m).getDiatonicPitch() == n.getChromaticPitch()){
+						o.addNote(m);
+						return;
+					}
+				}
+			}
+		}
+		o.addNote(n);
 	}
 	
 	public static void setInfoFromFilePath(PatternSet s){

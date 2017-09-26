@@ -1,0 +1,2 @@
+Data Sets Root=C:\Users\s119587\Desktop\Graduation Project\Peter's Files\code\datasets
+Pattern Discovery Root=C:\Users\s119587\Desktop\Graduation Project\Peter's Files\discovery
