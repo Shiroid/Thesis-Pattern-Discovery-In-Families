@@ -25,9 +25,10 @@ public class ProtoSelectionTask {
 	protected double pwsBias = 0.05;
 	protected double isBias = 0.5;
 	protected int numIterations = 10;
-	protected int skipCost = 1;
+	protected double skipCost = 1;
 	
-	protected boolean fillHoles = false;
+	protected PatternSet result;
+	protected PatternSet filledResult;
 	
 	public ProtoSelectionTask(TuneFamily tf, PatternSet ps, double mr){
 		this.tf = tf;
@@ -35,35 +36,46 @@ public class ProtoSelectionTask {
 		this.ps = ps;
 	}
 	
-	public ProtoSelectionTask(TuneFamily tf, PatternSet ps, double mr, boolean fillHoles){
-		this.tf = tf;
-		this.mr = mr;
-		this.ps = ps;
-		this.fillHoles = fillHoles;
+	public ProtoSelectionTask(TuneFamily tf, PatternSet ps, double mr,
+			double pwsBias, double isBias, int numIterations, double skipCost){
+		this(tf, ps, mr);
+		this.pwsBias = pwsBias;
+		this.isBias = isBias;
+		this.numIterations = numIterations;
+		this.skipCost = skipCost;
+	}
+	
+	public PatternSet getResult(){
+		return result;
+	}
+	
+	public PatternSet getFilledResult(){
+		return filledResult;
 	}
 	
 	public PatternSet run(){
-		PatternSet result = pairWiseSelection(ps, 0);
+		result = pairWiseSelection(ps, 0);
 		
 		for(int i = 1; i <= numIterations; i++){
 			result = pairWiseSelection(result, pwsBias);
 			result = individualSelection(result, isBias);
-			
-			PatternSet cropped = new PatternSet();
-			for(Pattern p: result){
-				//System.out.println(tf.getSongs().size()*mr*i/numIterations);
-				if(tf.getSongs().size()*mr*i/numIterations <= p.countSongs())
-					cropped.addPattern(p);
-			}
-			result = cropped;
-			
-		}
-		if(fillHoles){
-			result = pairWiseSelection(result, pwsBias);
-			result = individualSelection(result, isBias);
+			result = removeInsufficientPats(result, i);
 		}
 		
+		filledResult = pairWiseSelection(result, pwsBias);
+		filledResult = individualSelection(filledResult, isBias);
+		
 		return result;
+	}
+	
+	public PatternSet removeInsufficientPats(PatternSet prev, int iteration){
+		PatternSet cropped = new PatternSet();
+		for(Pattern p: prev){
+			//System.out.println(tf.getSongs().size()*mr*i/numIterations);
+			if(tf.getSongs().size()*mr*iteration/numIterations <= p.countSongs())
+				cropped.addPattern(p);
+		}
+		return cropped;
 	}
 	
 	public PatternSet pairWiseSelection(PatternSet prevSet, double bias){
@@ -230,12 +242,12 @@ public class ProtoSelectionTask {
 				}
 			}
 			else{
-				double curPatSpread = p.countSongs();
+				double curPatSpread = pEquiv.countSongs();
 				double fullPatSpread = p.countSongs();
 				for(PatternOccurrence o: p.getOccurrences()){
 					double fullOccSize = o.getEndNote().getNoteID() - o.getStartNote().getNoteID() +1;
 					double occSize = o.getNotes().size();
-					result.put(o, (1+bias*curPatSpread)*(Math.log(occSize)*occSize*occSize/fullOccSize)*fullPatSpread*fullPatSpread);
+					result.put(o, (1+bias*curPatSpread)*(Math.log(occSize)*occSize*occSize/fullOccSize)*fullPatSpread*fullPatSpread*fullPatSpread);
 				}
 			}
 		}

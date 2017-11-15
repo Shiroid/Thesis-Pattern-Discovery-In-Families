@@ -60,6 +60,7 @@ public class CollinsLispNote extends Note implements Comparable<Note> {
 	}
 	
 	//Additional algorithm stuff
+	@Override
 	public void applyNormalization(){
 		if(!normApplied){
 			this.diatonicPitch += this.diatonicAdd;
@@ -69,7 +70,8 @@ public class CollinsLispNote extends Note implements Comparable<Note> {
 		}
 		normApplied = true;
 	}
-	
+
+	@Override
 	public void revertNormalization(){
 		if(normApplied){
 			this.diatonicPitch -= this.diatonicAdd;

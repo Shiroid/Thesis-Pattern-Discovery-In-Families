@@ -21,6 +21,8 @@ public class ProtoDiscoveryTask {
 	protected double rr;
 	protected int patsPerEnd = 3;
 	protected int maxEmbellish = 1;
+	protected int minPatLength = 3;
+	protected boolean includeTranspositions = true;
 	
 	public ProtoDiscoveryTask(TuneFamily tf, double gs, double rr){
 		this.tf = tf;
@@ -28,13 +30,40 @@ public class ProtoDiscoveryTask {
 		this.rr = rr;
 	}
 	
-	public ProtoDiscoveryTask(TuneFamily tf, double gs, double rr, int patsPerEnd){
+	public ProtoDiscoveryTask(TuneFamily tf, double gs, double rr, int maxEmbellish){
 		this(tf, gs, rr);
+		this.setMaxEmbellish(maxEmbellish);
+	}
+	
+	public ProtoDiscoveryTask(TuneFamily tf, double gs, double rr, int maxEmbellish, int patsPerEnd){
+		this(tf, gs, rr, maxEmbellish);
 		this.setPatsPerEnd(patsPerEnd);
+	}
+	
+	public ProtoDiscoveryTask(TuneFamily tf, double gs, double rr, int maxEmbellish, int patsPerEnd, int minPatLength){
+		this(tf, gs, rr, maxEmbellish, patsPerEnd);
+		this.setMinPatLength(minPatLength);
+	}
+	
+	public ProtoDiscoveryTask(TuneFamily tf, double gs, double rr, int maxEmbellish, int patsPerEnd, int minPatLength, boolean includeTranspositions){
+		this(tf, gs, rr, maxEmbellish, patsPerEnd, minPatLength);
+		this.setIncludeTranspositions(includeTranspositions);
 	}
 	
 	public void setPatsPerEnd(int patsPerEnd){
 		this.patsPerEnd = patsPerEnd;
+	}
+	
+	public void setMaxEmbellish(int maxEmbellish){
+		this.maxEmbellish = maxEmbellish;
+	}
+	
+	public void setMinPatLength(int minPatLength){
+		this.minPatLength = minPatLength;
+	}
+	
+	public void setIncludeTranspositions(boolean includeTranspositions){
+		this.includeTranspositions = includeTranspositions;
 	}
 	
 	public PatternSet run(){
@@ -51,7 +80,7 @@ public class ProtoDiscoveryTask {
 				int j = i-1;
 				Note iNote = notes.get(i);
 				Note jNote = notes.get(j);
-				while(iNote.getOnset() - jNote.getOnset() <= gs && j >= 0 && i - j <= maxEmbellish){
+				while(iNote.getOnset() - jNote.getOnset() <= gs && j >= 0 && i - j <= maxEmbellish+1){
 					jNote = notes.get(j);
 					int pitchDiff = iNote.getDiatonicPitch() - jNote.getDiatonicPitch();
 					ArrayList<ProtoNotePair> diffSet;
@@ -115,7 +144,9 @@ public class ProtoDiscoveryTask {
 				}
 
 				//Determine the patterns
-				for(ArrayList<ProtoNotePair> list: tupleMatches.values()){
+				for(Integer key: tupleMatches.keySet()){
+					if(key != 0 && !includeTranspositions) break;
+					ArrayList<ProtoNotePair> list = tupleMatches.get(key);
 					Collections.sort(list, new PairSorter());
 					
 					Map<ProtoNotePair, ArrayList<Pattern>> status = new HashMap<ProtoNotePair, ArrayList<Pattern>>();
@@ -163,7 +194,7 @@ public class ProtoDiscoveryTask {
 			}
 		}
 
-		return removeShortPatterns(result, 3);
+		return removeShortPatterns(result, minPatLength);
 	}
 	
 	public PatternSet removeShortPatterns(PatternSet ps, int minElements){

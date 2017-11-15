@@ -19,6 +19,23 @@ public class ProtoDiscoveryAlgorithm {
 	protected double rr;
 	protected double ss;
 	protected double mr; 
+
+	protected int patsPerEnd = 3;
+	protected int maxEmbellish = 1;
+	protected int minDiscPatSize = 3;
+	protected boolean includeTranspositions = true;
+
+	protected int maxRepsPerSong = 3;
+	protected double subCoverageLeeway = 0.9;
+	
+	protected double pwsBias = 0.05;
+	protected double isBias = 0.5;
+	protected int numIterations = 10;
+	protected double skipCost = 1;
+	
+	protected PatternSet clustered;
+	protected PatternSet selectedInclusive;
+	protected PatternSet selected;
 	
 	public ProtoDiscoveryAlgorithm(TuneFamily tf, double gs, double rr, double ss, double mr){
 		this.tf = tf;
@@ -28,6 +45,35 @@ public class ProtoDiscoveryAlgorithm {
 		this.mr = mr;
 	}
 	
+	public ProtoDiscoveryAlgorithm(TuneFamily tf, double gs, double rr, double ss, double mr,
+			int maxEmbellish, int patsPerEnd, int  minDiscPatSize, boolean includeTranspositions){
+		this(tf, gs, rr, ss, mr);
+		this.patsPerEnd = patsPerEnd;
+		this.maxEmbellish = maxEmbellish;
+		this.minDiscPatSize = minDiscPatSize;
+		this.includeTranspositions = includeTranspositions;
+	}
+	
+	public ProtoDiscoveryAlgorithm(TuneFamily tf, double gs, double rr, double ss, double mr,
+			int maxEmbellish, int patsPerEnd, int  minDiscPatSize, boolean includeTranspositions, 
+			int maxRepsPerSong, double subCoverageLeeway){
+		this(tf, gs, rr, ss, mr, maxEmbellish, patsPerEnd, minDiscPatSize, includeTranspositions);
+		this.maxRepsPerSong = maxRepsPerSong;
+		this.subCoverageLeeway = subCoverageLeeway;
+	}
+	
+	public ProtoDiscoveryAlgorithm(TuneFamily tf, double gs, double rr, double ss, double mr,
+			int maxEmbellish, int patsPerEnd, int  minDiscPatSize, boolean includeTranspositions, 
+			int maxRepsPerSong, double subCoverageLeeway,
+			double pwsBias, double isBias, int numIterations, double skipCost){
+		this(tf, gs, rr, ss, mr, maxEmbellish, patsPerEnd, minDiscPatSize, includeTranspositions, 
+				maxRepsPerSong, subCoverageLeeway);
+		this.pwsBias = pwsBias;
+		this.isBias = isBias;
+		this.numIterations = numIterations;
+		this.skipCost = skipCost;
+	}
+	
 	public Collection<PatternSet> run(){
 		System.out.println("Starting");
 		prepNotes();
@@ -35,21 +81,40 @@ public class ProtoDiscoveryAlgorithm {
 		ProtoNormalizationTask normalization = new ProtoNormalizationTask(tf, gs, ss);
 		System.out.println("Normalizing");
 		normalization.computeNormalization();
-		normalization.normalize();
-		ProtoDiscoveryTask discovery = new ProtoDiscoveryTask(tf, gs, Math.sqrt(rr));
+		normalization.apply();
+		ProtoDiscoveryTask discovery = new ProtoDiscoveryTask(tf, gs, rr, maxEmbellish, patsPerEnd, minDiscPatSize, includeTranspositions);
 		System.out.println("Discovering");
 		result = discovery.run();
-		ProtoClusteringTask clustering = new ProtoClusteringTask(tf, result, gs, mr);
+		ProtoClusteringTask clustering = new ProtoClusteringTask(tf, result, gs, mr,
+				maxRepsPerSong, subCoverageLeeway);
 		System.out.println("Clustering");
-		result = clustering.run();
-		ProtoSelectionTask selection = new ProtoSelectionTask(tf, result, mr);
-		System.out.println("Selecting from " + result.getPatterns().size());
-		result = selection.run();
+		clustered = clustering.run();
+		ProtoSelectionTask selection = new ProtoSelectionTask(tf, clustered, mr,
+				pwsBias, isBias, numIterations, skipCost);
+		System.out.println("Selecting from " + clustered.getPatterns().size());
+		selected = selection.run();
+		selectedInclusive = selection.getFilledResult();
 		normalization.revert();
-		result = truncateIDs(result);
-		result = includeTimeRange(result);
 		System.out.println("Finished");
-		return result.splitBySongs();
+		return getSelected();
+	}
+	
+	public Collection<PatternSet> getSelectedInclusive(){
+		selectedInclusive = truncateIDs(selectedInclusive);
+		selectedInclusive = includeTimeRange(selectedInclusive);
+		return selectedInclusive.splitBySongs();
+	}
+	
+	public Collection<PatternSet> getSelected(){
+		selected = truncateIDs(selected);
+		selected = includeTimeRange(selected);
+		return selected.splitBySongs();
+	}
+	
+	public Collection<PatternSet> getClustered(){
+		clustered = truncateIDs(clustered);
+		clustered = includeTimeRange(clustered);
+		return clustered.splitBySongs();
 	}
 	
 	public void prepNotes(){
@@ -89,6 +154,9 @@ public class ProtoDiscoveryAlgorithm {
 	}
 	
 	public String getParams(){
-		return gs + "_" + rr + "_" + ss + "_" + mr;
+		return gs + "_" + rr + "_" + ss + "_" + mr + "_" + 
+				maxEmbellish + "_" + patsPerEnd + "_" + minDiscPatSize + "_" + includeTranspositions + "_" + 
+				maxRepsPerSong + "_" + subCoverageLeeway + "_" + 
+				pwsBias + "_" + isBias + "_" + numIterations + "_" + skipCost;
 	}
 }

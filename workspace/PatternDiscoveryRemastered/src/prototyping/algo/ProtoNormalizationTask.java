@@ -18,6 +18,7 @@ public class ProtoNormalizationTask {
 	protected TuneFamily tf;
 	protected double gs;
 	protected double ss;
+	protected int normEmbellishments = 0;
 
 	protected Map<Song, Double> timeMults;
 	protected Map<Song, Integer> diatonicAdds;
@@ -28,8 +29,15 @@ public class ProtoNormalizationTask {
 		this.ss = ss;
 	}
 	
+	public ProtoNormalizationTask(TuneFamily tf, double gs, double ss, int normEmbellishments){
+		this.tf = tf;
+		this.gs = gs;
+		this.ss = ss;
+		this.normEmbellishments = normEmbellishments;
+	}
+	
 	public void computeNormalization(){
-		ProtoDiscoveryTask discovery = new ProtoDiscoveryTask(tf, gs, ss);
+		ProtoDiscoveryTask discovery = new ProtoDiscoveryTask(tf, gs, ss, normEmbellishments, 100, 1);
 		PatternSet samples = discovery.run();
 
 		//Compute normalization weights
@@ -60,17 +68,17 @@ public class ProtoNormalizationTask {
 				tempoWeights.get(s1).put(s2, new HashMap<Double, Integer>());
 			}
 			Map<Integer, Integer> diaMap1 = pitchWeights.get(s1).get(s2);
-			Map<Integer, Integer> diaMap2 = pitchWeights.get(s1).get(s2);
+			Map<Integer, Integer> diaMap2 = pitchWeights.get(s2).get(s1);
 			Map<Double, Integer> temMap1 = tempoWeights.get(s1).get(s2);
-			Map<Double, Integer> temMap2 = tempoWeights.get(s1).get(s2);
+			Map<Double, Integer> temMap2 = tempoWeights.get(s2).get(s1);
 			int pitchDiff = no1.get(0).getDiatonicPitch() - no2.get(0).getDiatonicPitch();
 			for(int i = no1.size()-1; i > 0; i--){
-				double tempoDiff = (no1.get(i).getOnset() - no1.get(i-1).getOnset())/(no2.get(i).getOnset() - no2.get(i-1).getOnset());
+				double tempoDiff = (no2.get(i).getOnset() - no2.get(i-1).getOnset())/(no1.get(i).getOnset() - no1.get(i-1).getOnset());
 				if(diaMap1.containsKey(pitchDiff))
 					diaMap1.put(pitchDiff, diaMap1.get(pitchDiff) + 1); 
 				else diaMap1.put(pitchDiff, 1); 
 				if(diaMap2.containsKey(-pitchDiff))
-					diaMap2.put(-pitchDiff, diaMap2.get(pitchDiff) + 1); 
+					diaMap2.put(-pitchDiff, diaMap2.get(-pitchDiff) + 1); 
 				else diaMap2.put(-pitchDiff, 1); 
 				if(temMap1.containsKey(tempoDiff))
 					temMap1.put(tempoDiff, temMap1.get(tempoDiff) + 1); 
@@ -84,11 +92,20 @@ public class ProtoNormalizationTask {
 		//Determine pairwise normalizations
 		Map<Song, Map<Song, Integer>> pitchNorms = new HashMap<Song, Map<Song, Integer>>();
 		Map<Song, Map<Song, Double>> tempoNorms = new HashMap<Song, Map<Song, Double>>();
+		
+		//Fill up missing pairs
+		for(Song s: tf.getSongs()){
+			pitchNorms.put(s, new HashMap<Song, Integer>());
+			tempoNorms.put(s, new HashMap<Song, Double>());
+			for(Song s2: tf.getSongs()){
+				pitchNorms.get(s).put(s2, 0);
+				tempoNorms.get(s).put(s2, 1.0);
+			}
+		}
+		
 		for(Song s1: pitchWeights.keySet()){
-			HashMap<Song, Integer> s1pn = new HashMap<Song, Integer>();
-			pitchNorms.put(s1, s1pn);
-			HashMap<Song, Double> s1tn = new HashMap<Song, Double>();
-			tempoNorms.put(s1, s1tn);
+			Map<Song, Integer> s1pn = pitchNorms.get(s1);
+			Map<Song, Double> s1tn = tempoNorms.get(s1);
 			for(Song s2: pitchWeights.get(s1).keySet()){
 				Map<Integer, Integer> pitchWeightsPair = pitchWeights.get(s1).get(s2);
 				Map<Double, Integer> tempoWeightsPair = tempoWeights.get(s1).get(s2);
@@ -108,14 +125,7 @@ public class ProtoNormalizationTask {
 				}
 			}
 		}
-		//Fill up missing pairs
-		for(Song s: tf.getSongs()){
-			pitchNorms.put(s, new HashMap<Song, Integer>());
-			for(Song s2: tf.getSongs()){
-				pitchNorms.get(s).put(s2, 0);
-				tempoNorms.get(s).put(s2, 1.0);
-			}
-		}
+		
 
 		//Determine anchor
 		Set<Song> commonSongs = new HashSet<Song>();
@@ -163,6 +173,8 @@ public class ProtoNormalizationTask {
 				diatonicAdds.put(s, 0);
 			}
 		}
+		
+		normalize();
 
 	}
 	
@@ -180,6 +192,14 @@ public class ProtoNormalizationTask {
 		for(Song s: tf.getSongs()){
 			for(Note n: s.getNotes()){
 				n.revertNormalization();
+			}
+		}
+	}
+	
+	public void apply(){
+		for(Song s: tf.getSongs()){
+			for(Note n: s.getNotes()){
+				n.applyNormalization();
 			}
 		}
 	}

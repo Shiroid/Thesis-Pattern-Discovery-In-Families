@@ -130,7 +130,6 @@ public class Note implements Comparable<Note> {
 		this.timeMult = timeMult;
 		this.diatonicAdd = diatonicAdd;
 		this.chromAdd = chromAdd;
-		applyNormalization();
 	}
 	
 	public void applyNormalization(){
@@ -149,6 +148,14 @@ public class Note implements Comparable<Note> {
 	
 	public int getNoteID(){
 		return this.noteID;
+	}
+	
+	public double getTimeMult(){
+		return this.timeMult;
+	}
+	
+	public double getDiatonicAdd(){
+		return this.diatonicAdd;
 	}
 	
 }

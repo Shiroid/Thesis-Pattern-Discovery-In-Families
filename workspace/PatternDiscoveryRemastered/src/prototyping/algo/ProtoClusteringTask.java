@@ -25,6 +25,7 @@ public class ProtoClusteringTask {
 	protected double mr;
 	
 	protected int maxRepsPerSong = 3;
+	protected double subCoverageLeeway = 1;
 
 	protected Map<Note, Double> advanceLengths;
 	protected Map<Note, List<PatternOccurrence>> occurrenceHits;
@@ -34,6 +35,12 @@ public class ProtoClusteringTask {
 		this.gs = gs;
 		this.mr = mr;
 		this.ps = ps;
+	}
+	
+	public ProtoClusteringTask(TuneFamily tf, PatternSet ps, double gs, double mr, int maxRepsPerSong, double subCoverageLeeway){
+		this(tf, ps, gs, mr);
+		this.maxRepsPerSong = maxRepsPerSong;
+		this.subCoverageLeeway = subCoverageLeeway;
 	}
 	
 	public PatternSet run(){
@@ -96,13 +103,11 @@ public class ProtoClusteringTask {
 			HashSet<Song> reppedSongs = new HashSet<Song>();
 			reppedSongs.add(n.getSong());
 			HashMap<Song, Integer> reppedSongsCount = new HashMap<Song, Integer>();
-			double lastEnd = 0;
+			double lastAdvance = 0;
 
 			boolean isSufficient = false;
 			boolean firstDone = false;
 			for(PatternOccurrence o: occurrenceHits.get(n)){
-
-				lastEnd = o.getEndTime();
 				
 				List<Note> hitNotes = o.getSong().getNotes();
 				for(int i = o.getStartNote().getNoteID(); i <= o.getEndNote().getNoteID(); i++){
@@ -150,8 +155,10 @@ public class ProtoClusteringTask {
 				firstDone = true;
 				if(reppedSongsCount.get(other.getSong()) <= maxRepsPerSong && newOccOther.getNotes().size() > 0)
 						newPat.addOccurrence(newOccOther);
-				
-				if(reppedSongs.size() >= numReqSongs && lastEnd != o.getEndTime()) break;
+
+				if(reppedSongs.size() >= numReqSongs && lastAdvance == 0) lastAdvance = o.getEndTime() - n.getOnset();
+				if(reppedSongs.size() >= numReqSongs && 
+						n.getOnset() + lastAdvance*subCoverageLeeway <= o.getEndTime()) break;
 				if(reppedSongs.size() < numReqSongs)
 					isSufficient = false;
 			}
