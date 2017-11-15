@@ -137,4 +137,36 @@ public class PatternSet implements Iterable<Pattern>{
 		}
 		return false;
 	}
+	
+	public String getFileContent(){
+		String result = "";
+		for(Pattern p: this.patterns){
+			result = result + p.getFileContent();
+		}
+		return result;
+	}
+	
+	public Song getSong(){
+		return this.patterns.get(0).getSong();
+	}
+	
+	public List<PatternSet> splitBySongs(){
+		List<PatternSet> result = new ArrayList<PatternSet>();
+		for(Pattern p: this.patterns){
+			for(Pattern sp: p.splitBySongs()){
+				PatternSet existingSongPatSet = null;
+				for(PatternSet s: result){
+					if(s.getSong() == sp.getSong()){
+						existingSongPatSet = s;
+					}
+				}
+				if(existingSongPatSet == null){
+					existingSongPatSet = new PatternSet();
+					result.add(existingSongPatSet);
+				} 
+				existingSongPatSet.addPattern(sp);
+			}
+		}
+		return result;
+	}
 }

@@ -11,6 +11,7 @@ public class CollinsLispNote extends Note implements Comparable<Note> {
 	protected double duration;
 	protected int voice;
 
+	@Override
 	public int getDiatonicPitch() {
 		return diatonicPitch;
 	}
@@ -20,6 +21,7 @@ public class CollinsLispNote extends Note implements Comparable<Note> {
 		return duration;
 	}
 
+	@Override
 	public int getVoice() {
 		return voice;
 	}
@@ -55,5 +57,26 @@ public class CollinsLispNote extends Note implements Comparable<Note> {
 	@Override
 	public String toString(){
 		return "(" + onset + " " + chromaticPitch + " " + diatonicPitch + " " + duration + " " + voice + ")";
+	}
+	
+	//Additional algorithm stuff
+	public void applyNormalization(){
+		if(!normApplied){
+			this.diatonicPitch += this.diatonicAdd;
+			this.chromaticPitch += this.chromAdd;
+			this.onset *= this.timeMult;
+			this.duration *= this.timeMult;
+		}
+		normApplied = true;
+	}
+	
+	public void revertNormalization(){
+		if(normApplied){
+			this.diatonicPitch -= this.diatonicAdd;
+			this.chromaticPitch -= this.chromAdd;
+			this.onset /= this.timeMult;
+			this.duration /= this.timeMult;
+		}
+		normApplied = false;
 	}
 }

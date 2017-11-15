@@ -41,6 +41,7 @@ import nl.tue.cs.patterndiscovery.model.util.SubTreeFactory;
 import nl.tue.cs.patterndiscovery.view.util.ContainerTracker;
 import nl.tue.cs.patterndiscovery.view.util.FileCBRenderer;
 import nl.tue.cs.patterndiscovery.view.util.PanelFactory;
+import prototyping.algo.ProtoDiscoveryLauncher;
 import nl.tue.cs.patterndiscovery.filemanager.TypeChecker;
 import nl.tue.cs.patterndiscovery.view.util.FileDrop;
 
@@ -71,6 +72,8 @@ public class ContainerFiller extends JFrame implements ActionListener, ItemListe
 	private JButton copyFromButton;
 	private JButton swapButton;
 
+	private JButton algoButton;
+
 	private JTextArea songArea;
 	private ArrayList<Song> droppedSongs;
 	private JTextArea patternArea;
@@ -81,6 +84,8 @@ public class ContainerFiller extends JFrame implements ActionListener, ItemListe
 		super("Container Filler");
 		this.panelContainer = target;
 		this.oldMST = mst;
+		
+		this.algoButton = createButton("Discovery", false, this);
 		
 		JPanel copyPanel = new JPanel();
 		this.add(copyPanel);
@@ -298,6 +303,12 @@ public class ContainerFiller extends JFrame implements ActionListener, ItemListe
 			ContainerTracker.setClickMode(ContainerTracker.ClickMode.SWAP);
 			this.dispose();
 		}
+
+		if(arg0.getSource() == algoButton){
+			List<ModelSubTree> msts = constructMSTFamily(!this.useDropsBox.isSelected(), false);
+			new ProtoDiscoveryLauncher(msts);
+			this.dispose();
+		}
 	}
 	
 	protected void fillPatternBox(){
@@ -351,7 +362,7 @@ public class ContainerFiller extends JFrame implements ActionListener, ItemListe
 		return mst;
 	}
 	
-	protected List<ModelSubTree> constructMSTFamily(boolean fromFileStructure){
+	protected List<ModelSubTree> constructMSTFamily(boolean fromFileStructure, boolean getPatSets){
 		ArrayList<ModelSubTree> msts = new ArrayList<ModelSubTree>();
 		if(fromFileStructure){
 			ModelSubTree base = SubTreeFactory.createDSetToFamily((DataSet) dsBox.getSelectedItem(), 
@@ -361,25 +372,31 @@ public class ContainerFiller extends JFrame implements ActionListener, ItemListe
 				msts.add(SubTreeFactory.createDSetToSong(base.dataSet, base.tuneFamily, song));
 				song.load();
 			}	
-			
-			for(ModelSubTree mst: msts){
-				List<File> patSetFiles = DirectoryNavigator.findPatternSetFiles(mst, (File) paramBox.getSelectedItem());
-				if(!patSetFiles.isEmpty())
-					mst.patternSet = PatternSetReader.readPatternSet(
-						patSetFiles.get(0), 
-						mst.song);
-				else mst.patternSet = new PatternSet();
+
+			if(getPatSets){
+				for(ModelSubTree mst: msts){
+					List<File> patSetFiles = DirectoryNavigator.findPatternSetFiles(mst, (File) paramBox.getSelectedItem());
+					if(!patSetFiles.isEmpty())
+						mst.patternSet = PatternSetReader.readPatternSet(
+							patSetFiles.get(0), 
+							mst.song);
+					else mst.patternSet = new PatternSet();
+				}
 			}
 		} 
 		else {
 			for(int i = 0; i < droppedSongs.size(); i++){
 				ModelSubTree mst = SubTreeFactory.createEmpty();
 				mst.song = droppedSongs.get(i);
-				if(droppedPatternSets.size() > i) mst.patternSet = droppedPatternSets.get(i);
+				if(droppedPatternSets.size() > i && getPatSets) mst.patternSet = droppedPatternSets.get(i);
 				msts.add(mst);
 			}
 		}
 		return msts;
+	}
+	
+	protected List<ModelSubTree> constructMSTFamily(boolean fromFileStructure){
+		return constructMSTFamily(fromFileStructure, true);
 	}
 	
 	protected List<ModelSubTree> constructMSTParam(boolean fromFileStructure){
@@ -421,6 +438,7 @@ public class ContainerFiller extends JFrame implements ActionListener, ItemListe
 		this.singlePatternButton.setEnabled(enabled);
 		this.singlePatternFamilyButton.setEnabled(enabled);
 		this.multiPatternButton.setEnabled(enabled);
+		this.algoButton.setEnabled(enabled);
 	}
 
 	@Override
@@ -442,6 +460,7 @@ public class ContainerFiller extends JFrame implements ActionListener, ItemListe
 				fillPatternBox();
 			}
 			if(famBox.isEnabled()){
+				algoButton.setEnabled(true);
 				familyButton.setEnabled(true);
 				familyHeatButton.setEnabled(true);
 			}
@@ -489,6 +508,7 @@ public class ContainerFiller extends JFrame implements ActionListener, ItemListe
 				this.pianoPatternButton.setEnabled(true);
 				this.pianoHeatButton.setEnabled(true);
 				this.familyButton.setEnabled(true);
+				this.algoButton.setEnabled(true);
 				this.familyHeatButton.setEnabled(true);
 				this.multiPatternButton.setEnabled(true);
 				fillPatternBox();
@@ -518,7 +538,7 @@ public class ContainerFiller extends JFrame implements ActionListener, ItemListe
 			}
 			
 			if(paramBox.isEnabled()){
-				this.familyButton.setEnabled(true);
+				this.algoButton.setEnabled(true);
 			}	
 			
 			if(patternBox.isEnabled()){

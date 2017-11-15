@@ -53,6 +53,12 @@ public class PatternOccurrence extends NoteSequence{
 		this.endTime = Math.max(n.getOnset()+n.getDuration(), this.endTime);
 		this.startTime = Math.min(n.getOnset(), this.startTime);
 		this.isSorted = false;
+		if(this.endNote != null){
+			if(this.endNote.getOnset() < n.getOnset()) this.endNote = n;
+		} else this.endNote = n;
+		if(this.startNote != null){
+			if(this.startNote.getOnset() > n.getOnset()) this.startNote = n;
+		} else this.startNote = n;
 	}
 	
 	@Override
@@ -84,5 +90,35 @@ public class PatternOccurrence extends NoteSequence{
 		}
 		return false;
 	}
+	
+	public String getFileContent(){
+		String newline = System.getProperty("line.separator");
+		String result = "occurrence" + this.occurrenceID + newline;
+		for(Note n: this.notes){
+			result = result + n.asStringTuple() + newline;
+		}
+		return result;
+	}
+	
+	//Additional stuff for algo	
+	public Song getSong(){
+		return this.notes.get(0).getSong();
+	}
+	
+	protected Note startNote;
 
+	public Note getStartNote(){
+		return startNote;
+	}
+	
+	protected Note endNote;
+
+	public Note getEndNote(){
+		return endNote;
+	}
+	
+	//Sets the occurrence ID
+	public void forceOccurrenceID(int id){
+		occurrenceID = id;
+	}
 }

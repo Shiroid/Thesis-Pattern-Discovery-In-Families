@@ -53,6 +53,12 @@ public class SongNoteSaving extends Song {
 		this.minPitch = Math.min(n.getChromaticPitch(), this.minPitch);
 		this.endTime = Math.max(n.getOnset()+n.getDuration(), this.endTime);
 		this.startTime = Math.min(n.getOnset(), this.startTime);
+		if(this.endNote != null){
+			if(this.endNote.getOnset() < n.getOnset()) this.endNote = n;
+		} else this.endNote = n;
+		if(this.startNote != null){
+			if(this.startNote.getOnset() > n.getOnset()) this.startNote = n;
+		} else this.startNote = n;
 		this.notesSorted = false;
 	}
 

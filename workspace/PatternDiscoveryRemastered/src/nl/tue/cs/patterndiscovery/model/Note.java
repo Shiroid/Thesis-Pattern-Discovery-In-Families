@@ -16,6 +16,14 @@ public class Note implements Comparable<Note> {
 	public double getOnset() {
 		return onset;
 	}
+
+	public int getDiatonicPitch() {
+		return diatonicFromChromatic();
+	}
+
+	public int getVoice() {
+		return 0;
+	}
 	
 	public Note(double onset, int chromaticPitch){
 		this.chromaticPitch = chromaticPitch;
@@ -99,4 +107,48 @@ public class Note implements Comparable<Note> {
 	public String asStringTuple(){
 		return onset + ", " + ((double) chromaticPitch);
 	}
+
+	
+	//Additional data for algo
+	private Song song;
+	
+	public Song getSong(){
+		return song;
+	}
+	
+	public void setSong(Song s){
+		this.song = s;
+	}
+	
+	protected double timeMult;
+	protected int diatonicAdd;
+	protected int chromAdd;
+	protected boolean normApplied = false;
+	
+	public void setNormalization(double timeMult, int diatonicAdd, int chromAdd){
+		revertNormalization();
+		this.timeMult = timeMult;
+		this.diatonicAdd = diatonicAdd;
+		this.chromAdd = chromAdd;
+		applyNormalization();
+	}
+	
+	public void applyNormalization(){
+		normApplied = true;
+	}
+	
+	public void revertNormalization(){
+		normApplied = false;
+	}
+	
+	private int noteID;
+	
+	public void setNoteID(int noteID){
+		this.noteID = noteID;
+	}
+	
+	public int getNoteID(){
+		return this.noteID;
+	}
+	
 }
