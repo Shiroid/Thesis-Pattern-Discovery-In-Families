@@ -94,17 +94,4 @@ public abstract class Song extends NoteSequence{
 			SongReader.readLispSong(new File(this.filePath), this);
 		}
 	}
-	
-	//Extra stuff
-	protected Note startNote;
-
-	public Note getStartNote(){
-		return startNote;
-	}
-	
-	protected Note endNote;
-
-	public Note getEndNote(){
-		return endNote;
-	}
 }

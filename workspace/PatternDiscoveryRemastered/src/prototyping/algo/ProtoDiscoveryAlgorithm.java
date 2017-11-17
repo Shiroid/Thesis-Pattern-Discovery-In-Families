@@ -32,6 +32,7 @@ public class ProtoDiscoveryAlgorithm {
 	protected double isBias = 0.5;
 	protected int numIterations = 10;
 	protected double skipCost = 1;
+	protected boolean noOtherOccs = true;
 	
 	protected PatternSet clustered;
 	protected PatternSet selectedInclusive;
@@ -65,13 +66,14 @@ public class ProtoDiscoveryAlgorithm {
 	public ProtoDiscoveryAlgorithm(TuneFamily tf, double gs, double rr, double ss, double mr,
 			int maxEmbellish, int patsPerEnd, int  minDiscPatSize, boolean includeTranspositions, 
 			int maxRepsPerSong, double subCoverageLeeway,
-			double pwsBias, double isBias, int numIterations, double skipCost){
+			double pwsBias, double isBias, int numIterations, double skipCost, boolean noOtherOccs){
 		this(tf, gs, rr, ss, mr, maxEmbellish, patsPerEnd, minDiscPatSize, includeTranspositions, 
 				maxRepsPerSong, subCoverageLeeway);
 		this.pwsBias = pwsBias;
 		this.isBias = isBias;
 		this.numIterations = numIterations;
 		this.skipCost = skipCost;
+		this.noOtherOccs = noOtherOccs;
 	}
 	
 	public Collection<PatternSet> run(){
@@ -90,7 +92,7 @@ public class ProtoDiscoveryAlgorithm {
 		System.out.println("Clustering");
 		clustered = clustering.run();
 		ProtoSelectionTask selection = new ProtoSelectionTask(tf, clustered, mr,
-				pwsBias, isBias, numIterations, skipCost);
+				pwsBias, isBias, numIterations, skipCost, noOtherOccs);
 		System.out.println("Selecting from " + clustered.getPatterns().size());
 		selected = selection.run();
 		selectedInclusive = selection.getFilledResult();

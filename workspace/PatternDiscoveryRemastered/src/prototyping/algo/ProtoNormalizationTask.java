@@ -73,7 +73,7 @@ public class ProtoNormalizationTask {
 			Map<Double, Integer> temMap2 = tempoWeights.get(s2).get(s1);
 			int pitchDiff = no1.get(0).getDiatonicPitch() - no2.get(0).getDiatonicPitch();
 			for(int i = no1.size()-1; i > 0; i--){
-				double tempoDiff = (no2.get(i).getOnset() - no2.get(i-1).getOnset())/(no1.get(i).getOnset() - no1.get(i-1).getOnset());
+				double tempoDiff = (no1.get(i).getOnset() - no1.get(i-1).getOnset())/(no2.get(i).getOnset() - no2.get(i-1).getOnset());
 				if(diaMap1.containsKey(pitchDiff))
 					diaMap1.put(pitchDiff, diaMap1.get(pitchDiff) + 1); 
 				else diaMap1.put(pitchDiff, 1); 

@@ -67,7 +67,7 @@ public class ProtoClusteringTask {
 		}
 		
 		advanceLengths = new HashMap<Note, Double>();
-		double numReqSongs = tf.getSongs().size()*mr;
+		double numReqSongs = tf.getSongs().size()*(mr+1)/2;
 		for(Song s: tf){
 			for(Note n: s){
 				Collections.sort(occurrenceHits.get(n), new OccurrenceEndComparator());

@@ -17,11 +17,11 @@ public abstract class NoteSequence implements Iterable<Note>{
 	}
 
 	public double getStartTime() {
-		return startTime;
+		return this.getStartNote().getOnset();
 	}
 
 	public double getEndTime() {
-		return endTime;
+		return this.getEndNote().getOnset()+this.getEndNote().getDuration();
 	}
 
 	/*
@@ -57,5 +57,18 @@ public abstract class NoteSequence implements Iterable<Note>{
 			result += (hasNonCL?n.asStringTuple():n) + newLine;
 		}
 		return result;
+	}
+	
+	//Extra stuff
+	protected Note startNote;
+
+	public Note getStartNote(){
+		return startNote;
+	}
+	
+	protected Note endNote;
+
+	public Note getEndNote(){
+		return endNote;
 	}
 }

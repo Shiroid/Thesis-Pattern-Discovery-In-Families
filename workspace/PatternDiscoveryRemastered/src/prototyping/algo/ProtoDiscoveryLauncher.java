@@ -54,7 +54,8 @@ public class ProtoDiscoveryLauncher extends JFrame implements ActionListener {
 	private JSpinner pbParamSpinner; 
 	private JSpinner ibParamSpinner; 
 	private JSpinner iterParamSpinner; 
-	private JSpinner skipParamSpinner; 
+	private JSpinner skipParamSpinner;
+	private JCheckBox otherOccsBox; 
 	
 	private JButton runButton;
 	
@@ -78,7 +79,7 @@ public class ProtoDiscoveryLauncher extends JFrame implements ActionListener {
 		this.gsParamSpinner = createSpinner("Maximum Gap Size", 2, 0.5, 8, 0.5); 
 		this.rrParamSpinner = createSpinner("Rhytmic Variation", 0.7, 0.1, 1, 0.1); 
 		this.ssParamSpinner = createSpinner("Tempo Scale Limit", 0.5, 0.1, 1, 0.1); 
-		this.mrParamSpinner = createSpinner("Majority Ratio", 0.6, 0.05, 1, 0.05); 
+		this.mrParamSpinner = createSpinner("Majority Ratio", 0.4, 0.05, 1, 0.05); 
 		
 		JLabel taskParamLabel = new JLabel("Task Specific Paramters");
 		taskParamLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -108,6 +109,7 @@ public class ProtoDiscoveryLauncher extends JFrame implements ActionListener {
 		this.ibParamSpinner = createSpinner("Individual Selection Bias", 0.5, 0, 20, 0.05); 
 		this.iterParamSpinner = createSpinner("Number Of Selection Cycles", 10, 1, 30, 1); 
 		this.skipParamSpinner = createSpinner("Cost Of Non-Covered Notes", 1, -10, 100, 0.5); 
+		this.otherOccsBox = createCheckBox("Select Occurrences Strictly", true);
 
 		this.runButton = new JButton("Run Algorithm");
 		this.runButton.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -159,7 +161,8 @@ public class ProtoDiscoveryLauncher extends JFrame implements ActionListener {
 					(double) pbParamSpinner.getValue(),
 					(double) ibParamSpinner.getValue(),
 					(int) Math.round((double) iterParamSpinner.getValue()),
-					(double) skipParamSpinner.getValue());
+					(double) skipParamSpinner.getValue(),
+					otherOccsBox.isSelected());
 			algo.run();
 			writeOutput(algo);
 			this.dispose();

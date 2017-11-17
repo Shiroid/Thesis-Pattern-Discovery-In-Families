@@ -105,18 +105,6 @@ public class PatternOccurrence extends NoteSequence{
 		return this.notes.get(0).getSong();
 	}
 	
-	protected Note startNote;
-
-	public Note getStartNote(){
-		return startNote;
-	}
-	
-	protected Note endNote;
-
-	public Note getEndNote(){
-		return endNote;
-	}
-	
 	//Sets the occurrence ID
 	public void forceOccurrenceID(int id){
 		occurrenceID = id;

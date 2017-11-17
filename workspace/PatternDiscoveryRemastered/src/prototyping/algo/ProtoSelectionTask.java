@@ -26,6 +26,7 @@ public class ProtoSelectionTask {
 	protected double isBias = 0.5;
 	protected int numIterations = 10;
 	protected double skipCost = 1;
+	protected boolean noOtherOccs = true;
 	
 	protected PatternSet result;
 	protected PatternSet filledResult;
@@ -37,12 +38,13 @@ public class ProtoSelectionTask {
 	}
 	
 	public ProtoSelectionTask(TuneFamily tf, PatternSet ps, double mr,
-			double pwsBias, double isBias, int numIterations, double skipCost){
+			double pwsBias, double isBias, int numIterations, double skipCost, boolean noOtherOccs){
 		this(tf, ps, mr);
 		this.pwsBias = pwsBias;
 		this.isBias = isBias;
 		this.numIterations = numIterations;
 		this.skipCost = skipCost;
+		this.noOtherOccs = noOtherOccs;
 	}
 	
 	public PatternSet getResult(){
@@ -62,6 +64,7 @@ public class ProtoSelectionTask {
 			result = removeInsufficientPats(result, i);
 		}
 		
+		this.noOtherOccs = false;
 		filledResult = pairWiseSelection(result, pwsBias);
 		filledResult = individualSelection(filledResult, isBias);
 		
@@ -154,10 +157,15 @@ public class ProtoSelectionTask {
 						Pattern pOld = result.getPattern(pNew);
 						if(pOld != null){
 							pNew = pOld;
+						} else result.addPattern(pNew);
+						boolean contains0 = false;
+						boolean contains1 = false;
+						for(PatternOccurrence o: pNew){
+							if(o.getOccurrenceID() == cellScores[i0][i1].occurrence0.getOccurrenceID()) contains0 = true;
+							if(o.getOccurrenceID() == cellScores[i0][i1].occurrence1.getOccurrenceID()) contains1 = true;
 						}
-						pNew.addOccurrence(cellScores[i0][i1].occurrence0);
-						pNew.addOccurrence(cellScores[i0][i1].occurrence1);
-						result.addPattern(pNew);
+						if(!contains0) pNew.addOccurrence(cellScores[i0][i1].occurrence0);
+						if(!contains1) pNew.addOccurrence(cellScores[i0][i1].occurrence1);
 					}
 					i0 = cellScores[i0][i1].prevCell0;
 					i1 = cellScores[i0][i1].prevCell1;
@@ -170,12 +178,16 @@ public class ProtoSelectionTask {
 	public PatternSet individualSelection(PatternSet prevSet, double bias){
 		Map<PatternOccurrence, Double> scores = calculateScores(prevSet, bias);
 		Map<Note, List<IndividualBridge>> bridges = new HashMap<Note, List<IndividualBridge>>();
+		PatternSet refSet = ps;
+		if(noOtherOccs){
+			refSet = prevSet;
+		}
 		for(Song s0: tf){
 			for(Note n0: s0){
 				bridges.put(n0, new ArrayList<IndividualBridge>());
 			}
 		}
-		for(Pattern p: prevSet){
+		for(Pattern p: refSet){
 			for(PatternOccurrence o: p.getOccurrences()){
 				Note useNote = o.getEndNote();
 				if(useNote != o.getSong().getEndNote()) useNote = o.getSong().getNotes().get(useNote.getNoteID()+1);
@@ -205,9 +217,8 @@ public class ProtoSelectionTask {
 					Pattern pOld = result.getPattern(pNew);
 					if(pOld != null){
 						pNew = pOld;
-					}
+					} else result.addPattern(pNew);
 					pNew.addOccurrence(cellScores[i].occurrence);
-					result.addPattern(pNew);
 				}
 				i = cellScores[i].prevCell;
 			}
@@ -247,7 +258,7 @@ public class ProtoSelectionTask {
 				for(PatternOccurrence o: p.getOccurrences()){
 					double fullOccSize = o.getEndNote().getNoteID() - o.getStartNote().getNoteID() +1;
 					double occSize = o.getNotes().size();
-					result.put(o, (1+bias*curPatSpread)*(Math.log(occSize)*occSize*occSize/fullOccSize)*fullPatSpread*fullPatSpread*fullPatSpread);
+					result.put(o, (1+bias*curPatSpread)*(Math.log(occSize)*occSize*occSize/fullOccSize)*fullPatSpread);
 				}
 			}
 		}
